@@ -222,6 +222,8 @@ if option == "🏠 Home":
 
 elif option == "🏋️ AI Gym Trainer":
 
+    from workout import run_pose_detection
+
     st.header("🏋️ AI Gym Trainer")
 
     st.write(
@@ -230,7 +232,8 @@ elif option == "🏋️ AI Gym Trainer":
     )
 
     st.info(
-        "Make sure your full body is visible to the camera."
+        "The webcam workout feature is designed for local execution. "
+        "The deployed cloud version does not directly access your computer's webcam."
     )
 
     if st.button("▶️ Start Workout"):
