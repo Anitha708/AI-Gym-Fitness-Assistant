@@ -1,8 +1,8 @@
 import streamlit as st
 import pandas as pd
 
-from workout import run_pose_detection
 from habit_tracker import load_workout_data, save_workout
+from gym_buddy import get_gym_buddy_response
 
 
 # ============================================================
