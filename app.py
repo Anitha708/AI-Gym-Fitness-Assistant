@@ -222,7 +222,6 @@ if option == "🏠 Home":
 
 elif option == "🏋️ AI Gym Trainer":
 
-    from workout import run_pose_detection
 
     st.header("🏋️ AI Gym Trainer")
 
