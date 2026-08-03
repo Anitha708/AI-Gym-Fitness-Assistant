@@ -1,24 +1,32 @@
-import pandas as pd
 import os
+import pandas as pd
 
 
 FILE_NAME = "workout_history.csv"
+
+COLUMNS = [
+    "Date",
+    "Exercise",
+    "Repetitions",
+    "Duration",
+    "Calories"
+]
 
 
 def load_workout_data():
 
     if os.path.exists(FILE_NAME):
-        return pd.read_csv(FILE_NAME)
 
-    return pd.DataFrame(
-        columns=[
-            "Date",
-            "Exercise",
-            "Repetitions",
-            "Duration",
-            "Calories"
-        ]
-    )
+        df = pd.read_csv(FILE_NAME)
+
+        # Make sure the expected columns exist
+        for column in COLUMNS:
+            if column not in df.columns:
+                df[column] = None
+
+        return df[COLUMNS]
+
+    return pd.DataFrame(columns=COLUMNS)
 
 
 def save_workout(
