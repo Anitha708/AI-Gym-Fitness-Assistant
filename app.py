@@ -288,20 +288,26 @@ option = st.sidebar.radio(
 # ============================================================
 # HERO
 # ============================================================
-st.markdown("""
-<div class="hero">
 
-    <div class="badge">AI FITNESS PLATFORM</div>
+st.markdown(
+    """
+    <div class="hero">
+        <div class="badge">💪 SMART FITNESS • AI-POWERED</div>
+        <h1>🏋️ Your Personal AI Fitness Coach</h1>
+        <p>
+            Train smarter, eat better, and track your progress —
+            all in one intelligent fitness platform designed to
+            support your fitness journey.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 
-    <h1>🏋️ AI Gym & Fitness Assistant</h1>
 
-    <p>
-        Your intelligent fitness companion for workouts,
-        nutrition, progress tracking and personalized guidance.
-    </p>
-
-</div>
-""", unsafe_allow_html=True)
+# ============================================================
+# HOME
+# ============================================================
 
 # ============================================================
 # HOME
