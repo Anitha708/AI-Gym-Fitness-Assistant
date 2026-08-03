@@ -2,8 +2,7 @@ import streamlit as st
 import pandas as pd
 
 from habit_tracker import load_workout_data, save_workout
-from gym_buddy import get_gym_buddy_response
-
+from gym_buddy import gym_buddy_response
 
 # ============================================================
 # PAGE CONFIGURATION
@@ -12,173 +11,391 @@ from gym_buddy import get_gym_buddy_response
 st.set_page_config(
     page_title="AI Gym & Fitness Assistant",
     page_icon="🏋️",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 
 # ============================================================
-# VIRTUAL GYM BUDDY FUNCTION
+# SESSION STATE
 # ============================================================
 
-def get_gym_buddy_response(message):
-
-    message = message.lower().strip()
-
-    # Greetings
-    if message in ["hi", "hello", "hey", "hii", "hiii"]:
-        return (
-            "👋 Hey! I'm your Virtual Gym Buddy! "
-            "I'm doing great and I'm ready to support your fitness journey. 💪"
-        )
-
-    # How are you?
-    elif any(phrase in message for phrase in [
-        "how are you",
-        "how r you",
-        "how are u",
-        "how r u"
-    ]):
-        return (
-            "😊 I'm doing great! Thanks for asking. "
-            "I'm always ready to motivate you and help with "
-            "workouts, nutrition, and fitness goals. 💪"
-        )
-
-    # Name / identity
-    elif any(phrase in message for phrase in [
-        "who are you",
-        "what are you",
-        "what is your name",
-        "what's your name",
-        "your name"
-    ]):
-        return (
-            "🤖 I'm your AI Gym Buddy! "
-            "You can call me Gym Buddy. 💪 "
-            "I help you with workouts, nutrition, motivation, "
-            "recovery, and fitness tracking."
-        )
-
-    # Do you know me?
-    elif any(phrase in message for phrase in [
-        "you know me",
-        "do you know me",
-        "know about me"
-    ]):
-        return (
-            "😊 I know that you're using me as your Virtual Gym Buddy! "
-            "I can respond based on our current conversation, "
-            "but I don't automatically know your personal information."
-        )
-
-    # Thanks
-    elif any(phrase in message for phrase in [
-        "thank you",
-        "thanks",
-        "thank u"
-    ]):
-        return (
-            "You're very welcome! 😊 "
-            "Keep going with your fitness journey. 💪"
-        )
-
-    # Motivation
-    elif any(word in message for word in [
-        "motivat",
-        "lazy",
-        "give up",
-        "can't",
-        "tired",
-        "sad"
-    ]):
-        return (
-            "💪 Don't give up! Progress takes time. "
-            "Even a small workout today is better than doing nothing. "
-            "Take a short rest if you're tired and continue when you're ready."
-        )
-
-    # Workout
-    elif any(word in message for word in [
-        "workout",
-        "exercise",
-        "squat",
-        "pushup",
-        "push-up",
-        "training"
-    ]):
-        return (
-            "🏋️ Try to maintain proper form and controlled movements. "
-            "Start with a comfortable number of repetitions and "
-            "increase gradually."
-        )
-
-    # Nutrition
-    elif any(word in message for word in [
-        "diet",
-        "food",
-        "eat",
-        "nutrition",
-        "meal",
-        "calorie"
-    ]):
-        return (
-            "🥗 Focus on balanced meals with vegetables, fruits, "
-            "whole grains, and protein. Stay hydrated and avoid "
-            "excessively processed foods."
-        )
-
-    # Recovery
-    elif any(word in message for word in [
-        "rest",
-        "sleep",
-        "recover",
-        "recovery"
-    ]):
-        return (
-            "😴 Recovery is an important part of fitness. "
-            "Get enough sleep, stay hydrated, and give your body "
-            "time to recover between intense workouts."
-        )
-
-    # Goodbye
-    elif any(word in message for word in [
-        "bye",
-        "goodbye",
-        "see you"
-    ]):
-        return (
-            "👋 Bye! Keep taking care of yourself and stay consistent "
-            "with your fitness goals. See you soon! 💪"
-        )
-
-    # Default
-    else:
-        return (
-            "🤖 I'm still learning! You can ask me about workouts, "
-            "nutrition, motivation, recovery, or your fitness goals. 💪"
-        )
+if "chat_history" not in st.session_state:
+    st.session_state.chat_history = []
 
 
 # ============================================================
-# TITLE
+# PROFESSIONAL FITNESS UI CSS
 # ============================================================
 
-st.title("🏋️ AI Gym & Fitness Assistant")
+st.html("""
+<style>
 
-st.write(
-    "Your intelligent fitness companion for workouts, nutrition, "
-    "fitness tracking, and personalized guidance."
-)
+/* ================================
+   MAIN APP
+================================ */
+
+.stApp {
+    background: linear-gradient(135deg, #f8fafc, #eef2ff);
+    color: #111827;
+}
+
+.main .block-container {
+    padding-top: 2rem;
+    padding-bottom: 3rem;
+    max-width: 1400px;
+}
 
 
+/* ================================
+   SIDEBAR
+================================ */
+
+section[data-testid="stSidebar"] {
+    background: linear-gradient(
+        180deg,
+        #0f172a 0%,
+        #1e1b4b 55%,
+        #312e81 100%
+    );
+}
+
+section[data-testid="stSidebar"] * {
+    color: white !important;
+}
+
+section[data-testid="stSidebar"] h1,
+section[data-testid="stSidebar"] h2,
+section[data-testid="stSidebar"] h3 {
+    font-weight: 800;
+}
+
+
+/* ================================
+   HERO SECTION
+================================ */
+
+.hero {
+    background: linear-gradient(
+        135deg,
+        #0f172a 0%,
+        #312e81 50%,
+        #4f46e5 100%
+    );
+
+    padding: 45px 40px;
+    border-radius: 24px;
+    color: white;
+    margin-bottom: 30px;
+
+    box-shadow:
+        0 20px 45px rgba(49, 46, 129, 0.25);
+}
+
+.hero h1 {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 10px;
+}
+
+.hero p {
+    font-size: 18px;
+    opacity: 0.9;
+    line-height: 1.6;
+}
+
+
+/* ================================
+   BADGE
+================================ */
+
+.badge {
+    display: inline-block;
+
+    padding: 7px 15px;
+
+    border-radius: 50px;
+
+    background: rgba(255,255,255,0.15);
+
+    border: 1px solid rgba(255,255,255,0.25);
+
+    color: white;
+
+    font-size: 13px;
+    font-weight: 700;
+
+    margin-bottom: 12px;
+}
+
+
+/* ================================
+   FEATURE CARDS
+================================ */
+
+.feature-card {
+    background: rgba(255,255,255,0.95);
+
+    padding: 25px;
+
+    border-radius: 20px;
+
+    min-height: 180px;
+
+    margin-bottom: 20px;
+
+    border: 1px solid #e2e8f0;
+
+    box-shadow:
+        0 10px 30px rgba(15,23,42,0.07);
+
+    transition: all 0.25s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+
+    box-shadow:
+        0 18px 40px rgba(79,70,229,0.15);
+
+    border-color: #c7d2fe;
+}
+
+.feature-icon {
+    font-size: 36px;
+    margin-bottom: 10px;
+}
+
+.feature-card h3 {
+    color: #111827;
+    margin-bottom: 8px;
+    font-weight: 750;
+}
+
+.feature-card p {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+
+/* ================================
+   SECTION CARDS
+================================ */
+
+.section-card {
+    background: white;
+
+    padding: 28px;
+
+    border-radius: 20px;
+
+    border: 1px solid #e2e8f0;
+
+    box-shadow:
+        0 10px 30px rgba(15,23,42,0.06);
+
+    margin-bottom: 25px;
+}
+
+
+/* ================================
+   PAGE TITLES
+================================ */
+
+.page-title {
+    font-size: 34px;
+
+    font-weight: 800;
+
+    color: #0f172a;
+
+    margin-bottom: 8px;
+}
+
+.page-subtitle {
+    color: #64748b;
+
+    font-size: 17px;
+
+    margin-bottom: 25px;
+}
+
+
+/* ================================
+   METRICS
+================================ */
+
+div[data-testid="stMetric"] {
+
+    background: white;
+
+    padding: 20px;
+
+    border-radius: 18px;
+
+    border: 1px solid #e2e8f0;
+
+    box-shadow:
+        0 8px 25px rgba(15,23,42,0.06);
+}
+
+div[data-testid="stMetricLabel"] {
+    color: #64748b !important;
+}
+
+div[data-testid="stMetricValue"] {
+    color: #312e81 !important;
+    font-weight: 800;
+}
+
+
+/* ================================
+   BUTTONS
+================================ */
+
+.stButton > button {
+
+    background: linear-gradient(
+        135deg,
+        #4f46e5,
+        #7c3aed
+    );
+
+    color: white;
+
+    border: none;
+
+    border-radius: 12px;
+
+    font-weight: 700;
+
+    padding: 0.7rem 1.3rem;
+
+    transition: all 0.2s ease;
+
+    box-shadow:
+        0 6px 15px rgba(79,70,229,0.2);
+}
+
+.stButton > button:hover {
+
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 25px rgba(79,70,229,0.3);
+}
+
+
+/* ================================
+   INPUT BOXES
+================================ */
+
+.stTextInput input,
+.stNumberInput input {
+
+    border-radius: 10px !important;
+
+    border: 1px solid #cbd5e1 !important;
+
+    background: white !important;
+}
+
+.stTextInput input:focus,
+.stNumberInput input:focus {
+
+    border-color: #6366f1 !important;
+
+    box-shadow:
+        0 0 0 2px rgba(99,102,241,0.15) !important;
+}
+
+
+/* ================================
+   SELECTBOX
+================================ */
+
+div[data-baseweb="select"] > div {
+
+    border-radius: 10px;
+
+    border-color: #cbd5e1;
+}
+
+
+/* ================================
+   INFO / SUCCESS / WARNING
+================================ */
+
+div[data-testid="stAlert"] {
+
+    border-radius: 14px;
+
+    border: none;
+}
+
+
+/* ================================
+   DATAFRAME
+================================ */
+
+div[data-testid="stDataFrame"] {
+
+    border-radius: 15px;
+
+    overflow: hidden;
+
+    border: 1px solid #e2e8f0;
+}
+
+
+/* ================================
+   DIVIDER
+================================ */
+
+hr {
+
+    border: none;
+
+    border-top: 1px solid #e2e8f0;
+
+    margin: 25px 0;
+}
+
+
+/* ================================
+   FOOTER
+================================ */
+
+.footer {
+
+    text-align: center;
+
+    padding: 30px 10px;
+
+    margin-top: 40px;
+
+    color: #64748b;
+
+    font-size: 14px;
+}
+
+.footer b {
+    color: #312e81;
+}
+
+</style>
+""")
 # ============================================================
-# SIDEBAR
+# SIDEBAR / FITNESS MENU
 # ============================================================
 
-st.sidebar.title("📋 Fitness Menu")
+st.sidebar.title("🏋️ Gym AI")
+st.sidebar.caption("Your Personal Fitness Assistant")
+
+st.sidebar.markdown("---")
 
 option = st.sidebar.radio(
-    "Choose a module:",
+    "📋 Fitness Menu",
     [
         "🏠 Home",
         "🏋️ AI Gym Trainer",
@@ -193,26 +410,134 @@ option = st.sidebar.radio(
 
 
 # ============================================================
+# HERO HEADER
+# ============================================================
+
+st.html("""
+<div class="hero">
+
+    <div class="badge">AI FITNESS PLATFORM</div>
+
+    <h1>🏋️ AI Gym & Fitness Assistant</h1>
+
+    <p>
+        Your intelligent fitness companion for workouts,
+        nutrition, progress tracking and personalized guidance.
+    </p>
+
+</div>
+""")
+
+
+# ============================================================
 # HOME
 # ============================================================
 
 if option == "🏠 Home":
 
-    st.header("Welcome to your AI Fitness Assistant! 💪")
+    st.markdown(
+        '<div class="page-title">Welcome to Your Fitness Hub 👋</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="page-subtitle">'
+        'Everything you need to support your fitness journey in one place.'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.metric("Workout Status", "Ready")
+        st.metric("🏋️ Workout Status", "Ready")
 
     with col2:
-        st.metric("Fitness Goal", "Not Set")
+        st.metric("🎯 Fitness Goal", "Not Set")
 
     with col3:
-        st.metric("Performance", "0%")
+        st.metric("📈 Performance", "0%")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🏋️</div>
+            <h3>AI Gym Trainer</h3>
+            <p>
+                Workout guidance and exercise assistance
+                for your training sessions.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🥗</div>
+            <h3>AI Nutrition</h3>
+            <p>
+                BMI assessment, calorie estimation and
+                goal-based nutrition guidance.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📊</div>
+            <h3>Habit Tracker</h3>
+            <p>
+                Record workouts and monitor your fitness
+                activity over time.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    col1, col2, col3 = st.columns(3)
+
+    with col1:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🤖</div>
+            <h3>Virtual Gym Buddy</h3>
+            <p>
+                Get motivation, workout tips, nutrition
+                guidance and recovery suggestions.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Performance Analyzer</h3>
+            <p>
+                Calculate a simple workout performance
+                score from your training results.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col3:
+        st.markdown("""
+        <div class="feature-card">
+            <div class="feature-icon">🔌</div>
+            <h3>Smart Gym</h3>
+            <p>
+                Simulated equipment monitoring and
+                workout intensity recommendations.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.info(
-        "Select a module from the sidebar to begin your fitness journey."
+        "💡 Select a module from the sidebar to begin your fitness journey."
     )
 
 
@@ -222,26 +547,75 @@ if option == "🏠 Home":
 
 elif option == "🏋️ AI Gym Trainer":
 
+    st.markdown(
+        '<div class="page-title">🏋️ AI Gym Trainer</div>',
+        unsafe_allow_html=True
+    )
 
-    st.header("🏋️ AI Gym Trainer")
+    st.markdown(
+        '<div class="page-subtitle">'
+        'Real-time squat detection and repetition counting.'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    st.subheader("🎯 Real-Time Workout Assistant")
 
     st.write(
-        "Use your camera to detect squats, count repetitions, "
-        "and receive basic workout feedback."
+        "Stand in front of your webcam and perform squats. "
+        "The AI trainer detects your body position and "
+        "automatically counts your repetitions."
     )
 
     st.info(
-        "The webcam workout feature is designed for local execution. "
-        "The deployed cloud version does not directly access your computer's webcam."
+        "📷 Stand where your full body is visible to the webcam. "
+        "Keep your right side visible for better squat detection."
     )
 
-    if st.button("▶️ Start Workout"):
+    col1, col2, col3 = st.columns(3)
 
-        st.write("🏋️ Workout started!")
+    with col1:
+        st.metric("🏋️ Exercise", "Squats")
 
-        result = run_pose_detection()
+    with col2:
+        st.metric("🔍 Detection", "AI Pose")
 
-        st.success(result)
+    with col3:
+        st.metric("🟢 Status", "Ready")
+
+    st.divider()
+
+    if st.button(
+        "▶️ Start Squat Workout",
+        use_container_width=True
+    ):
+
+        st.write("🏋️ Starting AI Squat Detection...")
+
+        try:
+
+            from pose_detection import run_pose_detection
+
+            result = run_pose_detection()
+
+            st.success(result)
+
+        except ImportError:
+
+            st.error(
+                "❌ pose_detection.py file was not found."
+            )
+
+        except Exception as e:
+
+            st.error(
+                f"❌ Error while running pose detection: {e}"
+            )
+
+    st.warning(
+        "🛑 To stop the webcam, press the **Q key** "
+        "inside the webcam window."
+    )
 
 
 # ============================================================
@@ -250,14 +624,22 @@ elif option == "🏋️ AI Gym Trainer":
 
 elif option == "🥗 Diet & Nutrition":
 
-    st.header("🥗 AI Diet & Nutrition Assistant")
-
-    st.write(
-        "Get a basic BMI assessment, estimated calorie requirement, "
-        "and goal-based nutrition recommendations."
+    st.markdown(
+        '<div class="page-title">🥗 AI Diet & Nutrition Assistant</div>',
+        unsafe_allow_html=True
     )
 
-    st.subheader("👤 Personal Information")
+    st.markdown(
+        '<div class="page-subtitle">'
+        'BMI assessment, calorie estimation and goal-based nutrition guidance.'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    st.markdown(
+        '<div class="section-card"><h3>👤 Personal Information</h3></div>',
+        unsafe_allow_html=True
+    )
 
     col1, col2 = st.columns(2)
 
@@ -311,7 +693,10 @@ elif option == "🥗 Diet & Nutrition":
             ]
         )
 
-    if st.button("Calculate Fitness Plan"):
+    if st.button(
+        "📊 Calculate Fitness Plan",
+        use_container_width=True
+    ):
 
         height_m = height / 100
 
@@ -319,13 +704,10 @@ elif option == "🥗 Diet & Nutrition":
 
         if bmi < 18.5:
             category = "Underweight"
-
         elif bmi < 25:
             category = "Normal Weight"
-
         elif bmi < 30:
             category = "Overweight"
-
         else:
             category = "Obesity"
 
@@ -354,7 +736,10 @@ elif option == "🥗 Diet & Nutrition":
             "Very Active": 1.725
         }
 
-        calories = bmr * activity_multiplier[activity]
+        calories = (
+            bmr *
+            activity_multiplier[activity]
+        )
 
         if goal == "Weight Loss":
             target_calories = calories - 300
@@ -367,7 +752,7 @@ elif option == "🥗 Diet & Nutrition":
 
         st.divider()
 
-        st.subheader("📊 Your Fitness Assessment")
+        st.subheader("📊 Fitness Assessment")
 
         col1, col2, col3 = st.columns(3)
 
@@ -387,68 +772,58 @@ elif option == "🥗 Diet & Nutrition":
 
         if goal == "Weight Loss":
 
-            st.success(
-                """
-                **Weight Loss Focus**
+            st.success("""
+            **Weight Loss Focus**
 
-                • Choose vegetables and fruits regularly  
-                • Include lean protein in meals  
-                • Prefer whole grains  
-                • Limit highly processed foods  
-                • Drink enough water  
-                • Maintain regular physical activity
-                """
-            )
+            • Choose vegetables and fruits regularly  
+            • Include lean protein  
+            • Prefer whole grains  
+            • Limit highly processed foods  
+            • Stay hydrated  
+            • Maintain regular physical activity
+            """)
 
         elif goal == "Weight Gain":
 
-            st.success(
-                """
-                **Healthy Weight Gain Focus**
+            st.success("""
+            **Healthy Weight Gain Focus**
 
-                • Include protein-rich foods  
-                • Add nuts and seeds  
-                • Include milk/curd or suitable alternatives  
-                • Eat balanced carbohydrate sources  
-                • Have regular meals and snacks  
-                • Combine nutrition with strength training
-                """
-            )
+            • Include protein-rich foods  
+            • Add nuts and seeds  
+            • Include balanced carbohydrates  
+            • Eat regular meals and snacks  
+            • Combine nutrition with strength training
+            """)
 
         elif goal == "Muscle Building":
 
-            st.success(
-                """
-                **Muscle Building Focus**
+            st.success("""
+            **Muscle Building Focus**
 
-                • Include adequate protein  
-                • Eat balanced carbohydrates  
-                • Include healthy fats  
-                • Stay hydrated  
-                • Combine nutrition with resistance training  
-                • Get adequate rest and recovery
-                """
-            )
+            • Include adequate protein  
+            • Eat balanced carbohydrates  
+            • Include healthy fats  
+            • Stay hydrated  
+            • Combine nutrition with resistance training  
+            • Get adequate rest and recovery
+            """)
 
         else:
 
-            st.success(
-                """
-                **Maintenance Focus**
+            st.success("""
+            **Maintenance Focus**
 
-                • Maintain a balanced diet  
-                • Include fruits and vegetables  
-                • Choose whole grains  
-                • Include adequate protein  
-                • Stay hydrated  
-                • Continue regular physical activity
-                """
-            )
+            • Maintain a balanced diet  
+            • Include fruits and vegetables  
+            • Choose whole grains  
+            • Include adequate protein  
+            • Stay hydrated  
+            • Continue regular physical activity
+            """)
 
         st.info(
             "💡 These recommendations are general fitness guidance "
-            "and should not replace advice from a qualified "
-            "healthcare professional."
+            "and should not replace advice from a qualified healthcare professional."
         )
 
 
@@ -458,50 +833,65 @@ elif option == "🥗 Diet & Nutrition":
 
 elif option == "📊 Fitness Habit Tracker":
 
-    st.header("📊 AI Fitness Habit Tracker")
+    st.markdown(
+        '<div class="page-title">📊 Fitness Habit Tracker</div>',
+        unsafe_allow_html=True
+    )
 
-    st.write(
-        "Track your workouts and monitor your fitness progress over time."
+    st.markdown(
+        '<div class="page-subtitle">'
+        'Track your workouts and monitor your fitness progress.'
+        '</div>',
+        unsafe_allow_html=True
     )
 
     st.subheader("➕ Add Workout")
 
-    workout_date = st.date_input("Workout Date")
+    col1, col2 = st.columns(2)
 
-    exercise = st.selectbox(
-        "Exercise",
-        [
-            "Squats",
-            "Push-ups",
-            "Lunges",
-            "Plank",
-            "Running",
-            "Other"
-        ]
-    )
+    with col1:
 
-    repetitions = st.number_input(
-        "Repetitions",
-        min_value=0,
-        max_value=1000,
-        value=10
-    )
+        workout_date = st.date_input("Workout Date")
 
-    duration = st.number_input(
-        "Duration (minutes)",
-        min_value=0,
-        max_value=300,
-        value=10
-    )
+        exercise = st.selectbox(
+            "Exercise",
+            [
+                "Squats",
+                "Push-ups",
+                "Lunges",
+                "Plank",
+                "Running",
+                "Other"
+            ]
+        )
 
-    calories = st.number_input(
-        "Calories Burned",
-        min_value=0,
-        max_value=5000,
-        value=50
-    )
+        repetitions = st.number_input(
+            "Repetitions",
+            min_value=0,
+            max_value=1000,
+            value=10
+        )
 
-    if st.button("💾 Save Workout"):
+    with col2:
+
+        duration = st.number_input(
+            "Duration (minutes)",
+            min_value=0,
+            max_value=300,
+            value=10
+        )
+
+        calories = st.number_input(
+            "Calories Burned",
+            min_value=0,
+            max_value=5000,
+            value=50
+        )
+
+    if st.button(
+        "💾 Save Workout",
+        use_container_width=True
+    ):
 
         save_workout(
             workout_date,
@@ -511,7 +901,9 @@ elif option == "📊 Fitness Habit Tracker":
             calories
         )
 
-        st.success("Workout saved successfully! 🎉")
+        st.success(
+            "Workout saved successfully! 🎉"
+        )
 
     st.divider()
 
@@ -523,7 +915,8 @@ elif option == "📊 Fitness Habit Tracker":
 
         st.dataframe(
             df,
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
         )
 
         st.divider()
@@ -533,10 +926,7 @@ elif option == "📊 Fitness Habit Tracker":
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric(
-                "Total Workouts",
-                len(df)
-            )
+            st.metric("Total Workouts", len(df))
 
         with col2:
             st.metric(
@@ -579,121 +969,167 @@ elif option == "📊 Fitness Habit Tracker":
 
 elif option == "🤖 Virtual Gym Buddy":
 
-    st.header("🤖 Virtual Gym Buddy")
-
-    st.write(
-        "Your personal fitness companion for motivation, "
-        "workout guidance, nutrition tips, and recovery."
+    st.markdown(
+        '<div class="page-title">🤖 Virtual Gym Buddy</div>',
+        unsafe_allow_html=True
     )
 
-    st.info(
-        "Ask your Gym Buddy anything about your fitness journey! 💪"
+    st.markdown(
+        '<div class="page-subtitle">'
+        'Your personal fitness chatbot for motivation, workouts, '
+        'nutrition and recovery.'
+        '</div>',
+        unsafe_allow_html=True
     )
 
-    # Create chat history only once
+    st.subheader("💬 Chat with your Virtual Gym Buddy")
+
+    # --------------------------------------------------------
+    # INITIALIZE CHAT HISTORY
+    # --------------------------------------------------------
+
     if "chat_history" not in st.session_state:
         st.session_state.chat_history = []
 
     # --------------------------------------------------------
-    # Display previous conversation
+    # DISPLAY CHAT HISTORY
     # --------------------------------------------------------
 
-    st.subheader("💬 Conversation")
+    if len(st.session_state.chat_history) == 0:
 
-    if len(st.session_state.chat_history) > 0:
+        st.info(
+            "👋 Start a conversation with your Virtual Gym Buddy!"
+        )
+
+    else:
 
         for sender, message in st.session_state.chat_history:
 
             if sender == "You":
 
                 st.markdown(
-                    f"**👤 You:** {message}"
+                    f"""
+                    <div style="
+                        background:#e8f0fe;
+                        padding:12px 16px;
+                        border-radius:12px;
+                        margin:8px 0;
+                    ">
+                        <b>👤 You</b><br>
+                        {message}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
                 )
 
             else:
 
                 st.markdown(
-                    f"**🤖 Gym Buddy:** {message}"
+                    f"""
+                    <div style="
+                        background:#f3f4f6;
+                        padding:12px 16px;
+                        border-radius:12px;
+                        margin:8px 0;
+                    ">
+                        <b>🤖 Gym Buddy</b><br>
+                        {message}
+                    </div>
+                    """,
+                    unsafe_allow_html=True
                 )
-
-    else:
-
-        st.info(
-            "👋 Start the conversation by asking me something!"
-        )
 
     st.divider()
 
     # --------------------------------------------------------
-    # Message input
+    # CHAT INPUT
     # --------------------------------------------------------
 
-    user_message = st.text_input(
-        "💬 Your message",
-        placeholder="Example: Give me diet tips",
-        key="gym_buddy_input"
-    )
+    with st.form(
+        key="gym_buddy_form",
+        clear_on_submit=True
+    ):
+
+        user_message = st.text_input(
+            "💬 Your message",
+            placeholder="Example: Give me diet tips",
+            key="gym_buddy_input"
+        )
+
+        send_message = st.form_submit_button(
+            "💬 Send Message",
+            use_container_width=True
+        )
 
     # --------------------------------------------------------
-    # Send button
+    # SEND MESSAGE
     # --------------------------------------------------------
 
-    if st.button("Send 💬"):
+    if send_message:
 
         if user_message.strip():
 
-            response = get_gym_buddy_response(
+            response = gym_buddy_response(
                 user_message
             )
 
-            # Save BOTH user message and AI response
+            # Save user message
             st.session_state.chat_history.append(
                 ("You", user_message)
             )
 
+            # Save AI response
             st.session_state.chat_history.append(
                 ("Gym Buddy", response)
             )
 
-            # Rerun page so the new conversation appears
+            # Refresh the page
             st.rerun()
 
         else:
 
             st.warning(
-                "Please type a message first."
+                "⚠️ Please type a message first."
             )
 
+    st.divider()
+
     # --------------------------------------------------------
-    # Clear conversation
+    # CLEAR CONVERSATION
     # --------------------------------------------------------
 
-    if st.button("🗑️ Clear Conversation"):
+    if st.button(
+        "🗑️ Clear Conversation",
+        use_container_width=True,
+        key="clear_gym_buddy"
+    ):
 
         st.session_state.chat_history = []
 
         st.rerun()
 
-
 # ============================================================
 # PERFORMANCE ANALYZER
 # ============================================================
 
-
 elif option == "📈 Performance Analyzer":
 
-    st.header("📈 Pose-to-Performance Analyzer")
-
-    st.write(
-        "Analyze your workout performance and generate "
-        "a simple performance score."
+    st.markdown(
+        '<div class="page-title">📈 Performance Analyzer</div>',
+        unsafe_allow_html=True
     )
 
-    st.subheader("🏋️ Enter Workout Results")
+    st.markdown(
+        '<div class="page-subtitle">'
+        'Analyze your workout performance and calculate a fitness score.'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     col1, col2 = st.columns(2)
 
     with col1:
+
         squat_count = st.number_input(
             "Squats Completed",
             min_value=0,
@@ -709,6 +1145,7 @@ elif option == "📈 Performance Analyzer":
         )
 
     with col2:
+
         duration = st.number_input(
             "Workout Duration (minutes)",
             min_value=0,
@@ -723,15 +1160,25 @@ elif option == "📈 Performance Analyzer":
             value=70
         )
 
-    if st.button("📊 Analyze Performance"):
+    if st.button(
+        "📊 Analyze Performance",
+        use_container_width=True
+    ):
 
-        # ----------------------------------------------------
-        # SCORE CALCULATION
-        # ----------------------------------------------------
+        squat_score = min(
+            squat_count / 50 * 100,
+            100
+        )
 
-        squat_score = min(squat_count / 50 * 100, 100)
-        pushup_score = min(pushups / 30 * 100, 100)
-        duration_score = min(duration / 60 * 100, 100)
+        pushup_score = min(
+            pushups / 30 * 100,
+            100
+        )
+
+        duration_score = min(
+            duration / 60 * 100,
+            100
+        )
 
         performance_score = (
             squat_score * 0.30
@@ -745,73 +1192,66 @@ elif option == "📈 Performance Analyzer":
             1
         )
 
-        # ----------------------------------------------------
-        # PERFORMANCE LEVEL
-        # ----------------------------------------------------
-
         if performance_score >= 80:
+
             level = "Excellent 🏆"
+
             message = (
                 "Excellent performance! Keep maintaining "
                 "your consistency and form."
             )
 
         elif performance_score >= 60:
+
             level = "Good 💪"
+
             message = (
-                "Good progress! Continue training consistently "
-                "to improve your performance."
+                "Good progress! Continue training consistently."
             )
 
         elif performance_score >= 40:
+
             level = "Average 👍"
+
             message = (
-                "You're making progress. Try gradually "
-                "increasing your workout intensity."
+                "You're making progress. Gradually increase "
+                "your workout intensity."
             )
 
         else:
+
             level = "Beginner 🌱"
+
             message = (
-                "Everyone starts somewhere! Focus on consistency "
-                "and gradually increase your activity."
+                "Everyone starts somewhere! Focus on consistency."
             )
 
-        # ----------------------------------------------------
-        # DISPLAY RESULTS
-        # ----------------------------------------------------
-
         st.divider()
-
-        st.subheader("📊 Performance Results")
 
         col1, col2, col3 = st.columns(3)
 
         with col1:
+
             st.metric(
                 "Performance Score",
                 f"{performance_score}%"
             )
 
         with col2:
+
             st.metric(
                 "Performance Level",
                 level
             )
 
         with col3:
+
             st.metric(
                 "Workout Duration",
                 f"{duration} min"
             )
 
         st.success(message)
-
-        # ----------------------------------------------------
-        # PERFORMANCE BREAKDOWN
-        # ----------------------------------------------------
-
-        st.subheader("📋 Performance Breakdown")
 
         performance_data = pd.DataFrame({
             "Activity": [
@@ -828,9 +1268,12 @@ elif option == "📈 Performance Analyzer":
             ]
         })
 
+        st.subheader("📋 Performance Breakdown")
+
         st.dataframe(
             performance_data,
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
         )
 
         st.subheader("📈 Performance Chart")
@@ -848,28 +1291,31 @@ elif option == "📈 Performance Analyzer":
             "for educational/project demonstration purposes."
         )
 
+
 # ============================================================
 # SMART GYM ASSISTANT
 # ============================================================
 
-
 elif option == "🔌 Smart Gym Assistant":
 
-    st.header("🔌 Smart Gym Assistant")
-
-    st.write(
-        "AI-powered gym equipment monitoring and "
-        "workout intensity recommendation."
+    st.markdown(
+        '<div class="page-title">🔌 Smart Gym Assistant</div>',
+        unsafe_allow_html=True
     )
 
-    st.subheader("🏋️ Equipment Settings")
+    st.markdown(
+        '<div class="page-subtitle">'
+        'Simulated smart equipment monitoring and workout intensity analysis.'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
     col1, col2 = st.columns(2)
 
     with col1:
 
         equipment = st.selectbox(
-            "Select Equipment",
+            "🏋️ Select Equipment",
             [
                 "Treadmill",
                 "Exercise Bike",
@@ -889,24 +1335,23 @@ elif option == "🔌 Smart Gym Assistant":
     with col2:
 
         heart_rate = st.number_input(
-            "Heart Rate (BPM)",
+            "❤️ Heart Rate (BPM)",
             min_value=40,
             max_value=220,
             value=80
         )
 
         workout_time = st.number_input(
-            "Workout Time (minutes)",
+            "⏱️ Workout Time (minutes)",
             min_value=0,
             max_value=300,
             value=20
         )
 
-    if st.button("🤖 Analyze Equipment"):
-
-        # ----------------------------------------------------
-        # AI-BASED INTENSITY RECOMMENDATION
-        # ----------------------------------------------------
+    if st.button(
+        "🤖 Analyze Equipment",
+        use_container_width=True
+    ):
 
         if heart_rate > 160:
 
@@ -933,14 +1378,10 @@ elif option == "🔌 Smart Gym Assistant":
             recommendation = (
                 "✅ Low to moderate intensity detected. "
                 "You can gradually increase the intensity "
-                "if you feel comfortable."
+                "if comfortable."
             )
 
             status = "Low Intensity"
-
-        # ----------------------------------------------------
-        # DISPLAY RESULTS
-        # ----------------------------------------------------
 
         st.divider()
 
@@ -949,10 +1390,7 @@ elif option == "🔌 Smart Gym Assistant":
         col1, col2, col3 = st.columns(3)
 
         with col1:
-            st.metric(
-                "Equipment",
-                equipment
-            )
+            st.metric("Equipment", equipment)
 
         with col2:
             st.metric(
@@ -969,17 +1407,16 @@ elif option == "🔌 Smart Gym Assistant":
         st.subheader("🤖 AI Recommendation")
 
         if heart_rate > 160:
+
             st.warning(recommendation)
 
         elif heart_rate > 130:
+
             st.info(recommendation)
 
         else:
-            st.success(recommendation)
 
-        # ----------------------------------------------------
-        # SIMULATED IoT DATA
-        # ----------------------------------------------------
+            st.success(recommendation)
 
         st.subheader("📡 IoT Sensor Data")
 
@@ -1003,7 +1440,8 @@ elif option == "🔌 Smart Gym Assistant":
 
         st.dataframe(
             sensor_data,
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
         )
 
         st.success(
@@ -1012,539 +1450,35 @@ elif option == "🔌 Smart Gym Assistant":
 
         st.info(
             "💡 This project uses simulated IoT sensor data. "
-            "Real gym equipment can be connected using MQTT, "
-            "Node-RED, or other IoT communication protocols."
+            "Real equipment could be connected using MQTT, "
+            "Node-RED or other IoT protocols."
         )
 
 
 # ============================================================
 # GYM RECOMMENDER
 # ============================================================
-
 
 elif option == "📍 Gym Recommender":
 
-    st.header("📍 AI Gym Recommender")
-
-    st.write(
-        "Get personalized gym, workout program, and fitness "
-        "challenge recommendations based on your goals."
+    st.markdown(
+        '<div class="page-title">📍 AI Gym Recommender</div>',
+        unsafe_allow_html=True
     )
 
-    st.subheader("🎯 Your Fitness Preferences")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        goal = st.selectbox(
-            "Fitness Goal",
-            [
-                "Weight Loss",
-                "Muscle Building",
-                "General Fitness",
-                "Strength Training",
-                "Flexibility"
-            ]
-        )
-
-        experience = st.selectbox(
-            "Experience Level",
-            [
-                "Beginner",
-                "Intermediate",
-                "Advanced"
-            ]
-        )
-
-    with col2:
-
-        workout_type = st.selectbox(
-            "Preferred Workout",
-            [
-                "Gym Training",
-                "Home Workout",
-                "Cardio",
-                "Strength Training",
-                "Yoga"
-            ]
-        )
-
-        location = st.text_input(
-            "Enter Your City",
-            placeholder="Example: Hyderabad"
-        )
-
-    if st.button("🔍 Get Recommendations"):
-
-        # ----------------------------------------------------
-        # RECOMMENDATION LOGIC
-        # ----------------------------------------------------
-
-        if goal == "Weight Loss":
-
-            program = (
-                "🏃 Cardio + Full Body Training"
-            )
-
-            challenge = (
-                "🔥 30-Day Fitness Consistency Challenge"
-            )
-
-        elif goal == "Muscle Building":
-
-            program = (
-                "🏋️ Strength Training + Progressive Overload"
-            )
-
-            challenge = (
-                "💪 30-Day Strength Building Challenge"
-            )
-
-        elif goal == "Strength Training":
-
-            program = (
-                "🏋️ Compound Exercises + Strength Program"
-            )
-
-            challenge = (
-                "⚡ Progressive Strength Challenge"
-            )
-
-        elif goal == "Flexibility":
-
-            program = (
-                "🧘 Yoga + Mobility Training"
-            )
-
-            challenge = (
-                "🌿 21-Day Flexibility Challenge"
-            )
-
-        else:
-
-            program = (
-                "🏋️ Balanced Full Body Fitness Program"
-            )
-
-            challenge = (
-                "💪 30-Day General Fitness Challenge"
-            )
-
-        # ----------------------------------------------------
-        # RESULTS
-        # ----------------------------------------------------
-
-        st.divider()
-
-        st.subheader("🎯 Your Personalized Recommendations")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-
-            st.metric(
-                "Fitness Goal",
-                goal
-            )
-
-        with col2:
-
-            st.metric(
-                "Experience",
-                experience
-            )
-
-        with col3:
-
-            st.metric(
-                "Workout Type",
-                workout_type
-            )
-
-        st.subheader("🏋️ Recommended Program")
-
-        st.success(program)
-
-        st.subheader("🔥 Recommended Fitness Challenge")
-
-        st.info(challenge)
-
-        # ----------------------------------------------------
-        # GYM RECOMMENDATION
-        # ----------------------------------------------------
-
-        st.subheader("📍 Gym Recommendation")
-
-        if location.strip():
-
-            st.success(
-                f"Based on your preferences, look for a "
-                f"{workout_type.lower()} gym or fitness center "
-                f"near **{location}**."
-            )
-
-        else:
-
-            st.warning(
-                "Enter your city to receive a location-based "
-                "gym recommendation."
-            )
-
-        
-# ============================================================
-# PERFORMANCE ANALYZER
-# ============================================================
-
-elif option == "📈 Performance Analyzer":
-
-    st.header("📈 Pose-to-Performance Analyzer")
-
-    st.write(
-        "Analyze your workout performance and generate "
-        "a simple performance score."
+    st.markdown(
+        '<div class="page-subtitle">'
+        'Get personalized workout programs and fitness challenge recommendations.'
+        '</div>',
+        unsafe_allow_html=True
     )
-
-    st.subheader("🏋️ Enter Workout Results")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        squat_count = st.number_input(
-            "Squats Completed",
-            min_value=0,
-            max_value=200,
-            value=20
-        )
-
-        pushups = st.number_input(
-            "Push-ups Completed",
-            min_value=0,
-            max_value=200,
-            value=10
-        )
-
-    with col2:
-
-        duration = st.number_input(
-            "Workout Duration (minutes)",
-            min_value=0,
-            max_value=300,
-            value=30
-        )
-
-        consistency = st.slider(
-            "Workout Consistency (%)",
-            min_value=0,
-            max_value=100,
-            value=70
-        )
-
-    if st.button("📊 Analyze Performance"):
-
-        squat_score = min(squat_count / 50 * 100, 100)
-        pushup_score = min(pushups / 30 * 100, 100)
-        duration_score = min(duration / 60 * 100, 100)
-
-        performance_score = (
-            squat_score * 0.30
-            + pushup_score * 0.25
-            + duration_score * 0.20
-            + consistency * 0.25
-        )
-
-        performance_score = round(
-            performance_score,
-            1
-        )
-
-        if performance_score >= 80:
-
-            level = "Excellent 🏆"
-
-            message = (
-                "Excellent performance! Keep maintaining "
-                "your consistency and form."
-            )
-
-        elif performance_score >= 60:
-
-            level = "Good 💪"
-
-            message = (
-                "Good progress! Continue training consistently "
-                "to improve your performance."
-            )
-
-        elif performance_score >= 40:
-
-            level = "Average 👍"
-
-            message = (
-                "You're making progress. Try gradually "
-                "increasing your workout intensity."
-            )
-
-        else:
-
-            level = "Beginner 🌱"
-
-            message = (
-                "Everyone starts somewhere! Focus on consistency "
-                "and gradually increase your activity."
-            )
-
-        st.divider()
-
-        st.subheader("📊 Performance Results")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-
-            st.metric(
-                "Performance Score",
-                f"{performance_score}%"
-            )
-
-        with col2:
-
-            st.metric(
-                "Performance Level",
-                level
-            )
-
-        with col3:
-
-            st.metric(
-                "Workout Duration",
-                f"{duration} min"
-            )
-
-        st.success(message)
-
-        st.subheader("📋 Performance Breakdown")
-
-        performance_data = pd.DataFrame({
-            "Activity": [
-                "Squats",
-                "Push-ups",
-                "Workout Duration",
-                "Consistency"
-            ],
-            "Score": [
-                round(squat_score, 1),
-                round(pushup_score, 1),
-                round(duration_score, 1),
-                consistency
-            ]
-        })
-
-        st.dataframe(
-            performance_data,
-            use_container_width=True
-        )
-
-        st.subheader("📈 Performance Chart")
-
-        chart_data = performance_data.set_index(
-            "Activity"
-        )
-
-        st.bar_chart(
-            chart_data["Score"]
-        )
-
-        st.info(
-            "💡 This is a basic performance scoring system "
-            "for educational/project demonstration purposes."
-        )
-
-
-# ============================================================
-# SMART GYM ASSISTANT
-# ============================================================
-
-elif option == "🔌 Smart Gym Assistant":
-
-    st.header("🔌 Smart Gym Assistant")
-
-    st.write(
-        "AI-powered gym equipment monitoring and "
-        "workout intensity recommendation."
-    )
-
-    st.subheader("🏋️ Equipment Settings")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        equipment = st.selectbox(
-            "Select Equipment",
-            [
-                "Treadmill",
-                "Exercise Bike",
-                "Leg Press",
-                "Chest Press",
-                "Rowing Machine"
-            ]
-        )
-
-        intensity = st.slider(
-            "Current Intensity (%)",
-            min_value=0,
-            max_value=100,
-            value=50
-        )
-
-    with col2:
-
-        heart_rate = st.number_input(
-            "Heart Rate (BPM)",
-            min_value=40,
-            max_value=220,
-            value=80
-        )
-
-        workout_time = st.number_input(
-            "Workout Time (minutes)",
-            min_value=0,
-            max_value=300,
-            value=20
-        )
-
-    if st.button("🤖 Analyze Equipment"):
-
-        if heart_rate > 160:
-
-            recommendation = (
-                "⚠️ High intensity detected. "
-                "Consider reducing the workout intensity "
-                "and taking a rest."
-            )
-
-            status = "High Intensity"
-
-        elif heart_rate > 130:
-
-            recommendation = (
-                "💪 Moderate intensity detected. "
-                "Maintain your current pace and monitor "
-                "your energy level."
-            )
-
-            status = "Moderate Intensity"
-
-        else:
-
-            recommendation = (
-                "✅ Low to moderate intensity detected. "
-                "You can gradually increase the intensity "
-                "if you feel comfortable."
-            )
-
-            status = "Low Intensity"
-
-        st.divider()
-
-        st.subheader("📡 Smart Equipment Status")
-
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-
-            st.metric(
-                "Equipment",
-                equipment
-            )
-
-        with col2:
-
-            st.metric(
-                "Heart Rate",
-                f"{heart_rate} BPM"
-            )
-
-        with col3:
-
-            st.metric(
-                "Intensity",
-                f"{intensity}%"
-            )
-
-        st.subheader("🤖 AI Recommendation")
-
-        if heart_rate > 160:
-
-            st.warning(recommendation)
-
-        elif heart_rate > 130:
-
-            st.info(recommendation)
-
-        else:
-
-            st.success(recommendation)
-
-        st.subheader("📡 IoT Sensor Data")
-
-        sensor_data = pd.DataFrame({
-            "Sensor": [
-                "Heart Rate Sensor",
-                "Intensity Sensor",
-                "Workout Timer"
-            ],
-            "Value": [
-                f"{heart_rate} BPM",
-                f"{intensity}%",
-                f"{workout_time} minutes"
-            ],
-            "Status": [
-                status,
-                "Active",
-                "Connected"
-            ]
-        })
-
-        st.dataframe(
-            sensor_data,
-            use_container_width=True
-        )
-
-        st.success(
-            "🔌 Smart Gym equipment successfully monitored!"
-        )
-
-        st.info(
-            "💡 This project uses simulated IoT sensor data. "
-            "Real gym equipment can be connected using MQTT "
-            "or Node-RED."
-        )
-
-
-# ============================================================
-# GYM RECOMMENDER
-# ============================================================
-
-    elif option == "📍 Gym Recommender":
-
-      st.header("📍 AI Gym Recommender")
-
-    st.write(
-        "Get personalized gym, workout program, and fitness "
-        "challenge recommendations."
-    )
-
-    st.subheader("🎯 Your Fitness Preferences")
 
     col1, col2 = st.columns(2)
 
     with col1:
 
         gym_goal = st.selectbox(
-            "Fitness Goal",
+            "🎯 Fitness Goal",
             [
                 "Weight Loss",
                 "Muscle Building",
@@ -1555,7 +1489,7 @@ elif option == "🔌 Smart Gym Assistant":
         )
 
         experience = st.selectbox(
-            "Experience Level",
+            "📚 Experience Level",
             [
                 "Beginner",
                 "Intermediate",
@@ -1566,7 +1500,7 @@ elif option == "🔌 Smart Gym Assistant":
     with col2:
 
         workout_type = st.selectbox(
-            "Preferred Workout",
+            "🏋️ Preferred Workout",
             [
                 "Gym Training",
                 "Home Workout",
@@ -1577,11 +1511,14 @@ elif option == "🔌 Smart Gym Assistant":
         )
 
         location = st.text_input(
-            "Enter Your City",
+            "📍 Enter Your City",
             placeholder="Example: Hyderabad"
         )
 
-    if st.button("🔍 Get Recommendations"):
+    if st.button(
+        "🔍 Get Recommendations",
+        use_container_width=True
+    ):
 
         if gym_goal == "Weight Loss":
 
@@ -1640,21 +1577,18 @@ elif option == "🔌 Smart Gym Assistant":
         col1, col2, col3 = st.columns(3)
 
         with col1:
-
             st.metric(
                 "Fitness Goal",
                 gym_goal
             )
 
         with col2:
-
             st.metric(
                 "Experience",
                 experience
             )
 
         with col3:
-
             st.metric(
                 "Workout Type",
                 workout_type
@@ -1706,7 +1640,8 @@ elif option == "🔌 Smart Gym Assistant":
 
         st.dataframe(
             recommendation_data,
-            use_container_width=True
+            use_container_width=True,
+            hide_index=True
         )
 
         st.success(
@@ -1714,7 +1649,19 @@ elif option == "🔌 Smart Gym Assistant":
         )
 
         st.info(
-            "💡 This prototype uses rule-based recommendation "
-            "logic. A production version could use machine "
-            "learning, location APIs, and historical user data."
-        ) 
+            "💡 This prototype uses rule-based recommendation logic. "
+            "A production version could use machine learning, "
+            "location APIs and historical user data."
+        )
+
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.html("""
+<div class="footer">
+    <b>🏋️ AI Gym & Fitness Assistant</b><br>
+    AI-powered fitness companion • Built with Python & Streamlit
+</div>
+""")
