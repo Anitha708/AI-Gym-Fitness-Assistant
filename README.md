@@ -115,7 +115,7 @@ streamlit run app.py
 
 ## 👩‍💻 Author
 
-**Anitha Devi**
+**Gude Anitha Devi**
 
 B.Tech – Electronics and Communication Engineering (ECE)
 
